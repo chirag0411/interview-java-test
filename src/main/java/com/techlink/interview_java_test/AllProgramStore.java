@@ -9,7 +9,8 @@ public class AllProgramStore {
 
     private static final System.Logger LOG = System.getLogger(AllProgramStore.class.getName());
 
-    private AllProgramStore() {}
+    private AllProgramStore() {
+    }
 
     public static void main(String[] args) {
         System.out.println("Hello Test Program....!!");
