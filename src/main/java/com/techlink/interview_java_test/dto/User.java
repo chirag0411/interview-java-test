@@ -1,90 +1,44 @@
 package com.techlink.interview_java_test.dto;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.validator.constraints.URL;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class User {
+
+    @Positive(message = "id must be greater than 0")
     private long id;
+
+    @NotBlank(message = "name is required")
     private String name;
+
+    @NotBlank(message = "username is required")
     private String username;
+
+    @Email(message = "email must be valid")
     private String email;
+
+    @Pattern(regexp = "^\\+?[1-9]\\d{1,14}$",
+            message = "phone must be E.164 format, e.g. +14155552671")
     private String phone;
+
+    @URL(message = "website must be a valid URL")
     private String website;
+
     private Employee employee;
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", username='" + username + '\'' +
-                ", email='" + email + '\'' +
-                ", phone='" + phone + '\'' +
-                ", website='" + website + '\'' +
-                ", employee=" + employee +
-                '}';
-    }
-
-    public User(long id, String name, String username, String email, String phone, String website, Employee employee) {
-        this.id = id;
-        this.name = name;
-        this.username = username;
-        this.email = email;
-        this.phone = phone;
-        this.website = website;
-        this.employee = employee;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getWebsite() {
-        return website;
-    }
-
-    public void setWebsite(String website) {
-        this.website = website;
-    }
-
-    public Employee getEmployee() {
-        return employee;
-    }
-
-    public void setEmployee(Employee employee) {
-        this.employee = employee;
-    }
 }

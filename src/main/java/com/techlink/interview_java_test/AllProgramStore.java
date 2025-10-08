@@ -6,149 +6,197 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class AllProgramStore {
+
+    private static final System.Logger LOG = System.getLogger(AllProgramStore.class.getName());
+
+    private AllProgramStore() {}
+
     public static void main(String[] args) {
         System.out.println("Hello Test Program....!!");
-        countOccurrences(); // Count countOccurrences from String, array or List : Number, Char, words
-        isPrimeNumber(31);
-        printPrimeNumbers(101);
-        checkLongestRepeatingSequence();
-        getUniqueWordFromString();
-        pairNumbersHavingSum();
-        listOfMapWithFilterAndFlatMap();
-        findLastNonRepatedChar();
+        LOG.log(System.Logger.Level.INFO, "Starting AllProgramStore with args: {0}", Arrays.toString(args));
+
+        countOccurrences();                             // Count occurrences in strings / numbers
+        System.out.println("31 is prime? " + isPrimeNumber(31));
+        printPrimeNumbers(101);                         // Print primes up to limit
+        checkLongestRepeatingSequence();                // Longest repeating substring
+        getUniqueWordFromString();                      // Unique/distinct words
+        pairNumbersHavingSum();                         // Pairs summing to target
+        findLastNonRepatedChar();                      // Last non-repeating char
+
+        LOG.log(System.Logger.Level.INFO, "Finished AllProgramStore execution.");
     }
 
+    // ---------- Occurrence counting ----------
+    private static void countOccurrences() {
+        // words
+        var wordsCsv = "Apple,Orange,Apple,Mango,Apple,Mango";
+        Map<String, Long> wordCounts = Arrays.stream(wordsCsv.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.groupingBy(Function.identity(), LinkedHashMap::new, Collectors.counting()));
+        System.out.println("wordCounts = " + wordCounts); // {Apple=3, Orange=1, Mango=2}
+
+        // numbers
+        var numbersCsv = " 1,2, 3,1,2, 3 ,4 ,5 ";
+        Map<Integer, Long> numberCounts = Arrays.stream(numbersCsv.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(Integer::parseInt)
+                .collect(Collectors.groupingBy(Function.identity(), LinkedHashMap::new, Collectors.counting()));
+        System.out.println("numberCounts = " + numberCounts); // {1=2, 2=2, 3=2, 4=1, 5=1}
+
+        // char frequency (letters)
+        var letters = "abcbadbabcbab";
+        Map<Character, Long> charCounts = letters.chars()
+                .mapToObj(c -> (char) c)
+                .collect(Collectors.groupingBy(Function.identity(), LinkedHashMap::new, Collectors.counting()));
+        System.out.println("charCounts = " + charCounts); // {a=4, b=6, c=2, d=1}
+
+        // digit frequency
+        var digits = "123232413253598976";
+        Map<Character, Long> digitCounts = digits.chars()
+                .mapToObj(c -> (char) c)
+                .collect(Collectors.groupingBy(Function.identity(), LinkedHashMap::new, Collectors.counting()));
+        System.out.println("digitCounts = " + digitCounts);
+    }
+
+    // ---------- Prime helpers ----------
+    private static boolean isPrimeNumber(int n) {
+        if (n <= 1) return false;
+        if (n <= 3) return true;            // 2 and 3
+        if (n % 2 == 0 || n % 3 == 0) return false;
+
+        // 6k ± 1 optimization
+        for (int i = 5; (long) i * i <= n; i += 6) {
+            if (n % i == 0 || n % (i + 2) == 0) return false;
+        }
+        return true;
+    }
+
+    private static void printPrimeNumbers(int limit) {
+        System.out.println("Primes up to " + limit + ":");
+        IntStream.rangeClosed(2, limit)
+                .filter(AllProgramStore::isPrimeNumber)
+                .forEach(System.out::println);
+    }
+
+    // ---------- Longest repeating substring (suffix-array style) ----------
+    private static void checkLongestRepeatingSequence() {
+        String str = "abracadabra";
+        String longest = longestRepeatingSubstring(str);
+        System.out.println("Longest repeating sequence: " + longest);
+    }
+
+    private static String longestRepeatingSubstring(String s) {
+        int n = s.length();
+        if (n <= 1) return "";
+
+        // Build all suffixes with starting index
+        String[] suffixes = new String[n];
+        for (int i = 0; i < n; i++) suffixes[i] = s.substring(i);
+
+        // Sort suffixes lexicographically
+        Arrays.sort(suffixes);
+
+        // Compare adjacent suffixes for LCP
+        String best = "";
+        for (int i = 1; i < n; i++) {
+            String lcp = lcp(suffixes[i - 1], suffixes[i]);
+            if (lcp.length() > best.length()) best = lcp;
+        }
+        return best;
+    }
+
+    private static String lcp(String a, String b) {
+        int len = Math.min(a.length(), b.length());
+        int i = 0;
+        while (i < len && a.charAt(i) == b.charAt(i)) i++;
+        return a.substring(0, i);
+    }
+
+    // ---------- Unique / distinct words ----------
+    private static void getUniqueWordFromString() {
+        // Distinct (preserve first-seen order)
+        List<String> osList = List.of("Microsoft Windows", "Mac OS", "GNU Linux", "Free BSD", "GNU Linux", "Mac OS");
+        List<String> distinct = osList.stream().distinct().collect(Collectors.toList());
+        System.out.println("distinct = " + distinct); // [Microsoft Windows, Mac OS, GNU Linux, Free BSD]
+
+        // Words that occur exactly once in the sentence
+        String sentence = "Welcome to geeks for geeks";
+        List<String> uniqueOnce = Arrays.stream(sentence.split("\\s+"))
+                .collect(Collectors.groupingBy(Function.identity(), LinkedHashMap::new, Collectors.counting()))
+                .entrySet().stream()
+                .filter(e -> e.getValue() == 1)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+        System.out.println("uniqueOnce = " + uniqueOnce); // [Welcome, to, for]
+    }
+
+    // ---------- Pairs with target sum (unique, order-independent) ----------
+    private static void pairNumbersHavingSum() {
+        int[] arr = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
+        int sum = 13;
+
+        Set<Integer> seen = new HashSet<>();
+        Set<String> printed = new HashSet<>();
+
+        for (int val : arr) {
+            int comp = sum - val;
+            if (seen.contains(comp)) {
+                int a = Math.min(val, comp);
+                int b = Math.max(val, comp);
+                String key = a + ":" + b;
+                if (printed.add(key)) {
+                    System.out.println("Pair : " + a + ", " + b);
+                }
+            }
+            seen.add(val);
+        }
+    }
+
+    // ---------- Last non-repeating character ----------
     private static void findLastNonRepatedChar() {
-        String s = "swqiss"; // OutPut : i -> Last Non Repeating Character From String
-        Character c = s.chars().mapToObj(i -> (char) i).collect(Collectors.groupingBy(Function.identity(),
-                        LinkedHashMap::new, Collectors.counting()))
-                .entrySet().stream().filter(e -> e.getValue() == 1L)
-                .map(entry -> entry.getKey()).reduce((first, second) -> second).get();
-        System.out.println("findLastNonRepatedChar :  " + c);
+        String s = "swqiss"; // expected: i
+        Optional<Character> lastUnique = s.chars()
+                .mapToObj(i -> (char) i)
+                .collect(Collectors.groupingBy(Function.identity(), LinkedHashMap::new, Collectors.counting()))
+                .entrySet().stream()
+                .filter(e -> e.getValue() == 1L)
+                .map(Map.Entry::getKey)
+                .reduce((first, second) -> second); // take last
+
+        System.out.println("findLastNonRepatedChar : " + lastUnique.orElse(null));
     }
 
+    // ---------- Demo: list of maps + flatMap with filtering ----------
     private static void listOfMapWithFilterAndFlatMap() {
         List<Map<String, String>> collData = new ArrayList<>();
 
-        // Map of student and course name
-        Map<String, String> stuMap = new HashMap<>();
-        // Add map 1
-        stuMap.put("S1", "Course_1");
-        stuMap.put("S2", "Course_2");
-        stuMap.put("S3", "Course_1");
-        stuMap.put("S4", "Course_2");
-        stuMap.put("S5", "Course_1");
-        stuMap.put(null, "College_A");
-        collData.add(stuMap);
+        Map<String, String> stuMap1 = new HashMap<>();
+        stuMap1.put("S1", "Course_1");
+        stuMap1.put("S2", "Course_2");
+        stuMap1.put("S3", "Course_1");
+        stuMap1.put("S4", "Course_2");
+        stuMap1.put("S5", "Course_1");
+        stuMap1.put(null, "College_A");
+        collData.add(stuMap1);
 
-        // Add map 2
-        stuMap = new HashMap<>();
-        stuMap.put("Q1", "Course_1");
-        stuMap.put("Q2", "Course_2");
-        stuMap.put("Q3", "Course_1");
-        stuMap.put("Q4", "Course_2");
-        stuMap.put("Q5", "Course_1");
-        stuMap.put(null, "College_B");
-        collData.add(stuMap);
+        Map<String, String> stuMap2 = new HashMap<>();
+        stuMap2.put("Q1", "Course_1");
+        stuMap2.put("Q2", "Course_2");
+        stuMap2.put("Q3", "Course_1");
+        stuMap2.put("Q4", "Course_2");
+        stuMap2.put("Q5", "Course_1");
+        stuMap2.put(null, "College_B");
+        collData.add(stuMap2);
 
         // Extract all entries with value "Course_1" into a single list
         List<Map.Entry<String, String>> course1Entries = collData.stream()
                 .flatMap(map -> map.entrySet().stream())
-                .filter(entry -> "Course_1".equals(entry.getValue()))
+                .filter(e -> e.getKey() != null)                // guard against null keys
+                .filter(e -> "Course_1".equals(e.getValue()))
                 .collect(Collectors.toList());
-        // Print the result
-        course1Entries.forEach(entry -> System.out.println(entry.getKey() + " : " + entry.getValue()));
-    }
 
-    private static void countOccurrences() {
-        String wordStr = "Apple,Orange,Apple,Mango,Apple,Mango"; // {Apple=3, Mango=2, Banna=1}
-        //List<String> wordStr = List.of("Apple", "orange", "Apple");
-        Map<String, Long> result = Arrays.asList(wordStr.split(",")).stream()
-                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting())); // {Apple=3, Mango=2, Banna=1}
-        System.out.println(result);
-
-        String numberStr = " 1,2, 3,1,2, 3 ,4 ,5 "; // {1=2, 2=2, 3=2, 4=1, 5=1}
-        Map<Integer, Long> occurrences = Arrays.asList(numberStr.replace(" ", "").split("\\s*,\\s*"))
-                .stream().map(Integer::parseInt).collect(Collectors.groupingBy(Function.identity(), Collectors.counting())); // {Apple=3, Mango=2, Banna=1}
-        System.out.println(occurrences);
-
-        String str = "abcbadbabcbab"; // {a=4, b=6, c=2, d=1}
-        Map<Character, Long> withSpace = str.chars().mapToObj(c -> (char) c)
-                .collect(Collectors.groupingBy(c -> c, Collectors.counting()));
-        System.out.println("withSpace " + withSpace); // withSpace {a=4, b=6, c=2, d=1}
-
-        String charInt = "123232413253598976"; // {1=2, 2=4, 3=4, 4=1, 5=2, 6=1, 7=1, 8=1, 9=2}
-        Map<Character, Long> charIntResult = charInt.chars().mapToObj(c -> (char) c) // Convert int to char
-                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
-        System.out.println(charIntResult);
-    }
-
-    private static boolean isPrimeNumber(int n) {
-        if (n <= 1) return false; // Handle edge cases
-        if (n <= 3) return true; // 2 and 3 are prime numbers
-
-        // Check if n is divisible by any number from 2 to sqrt(n)
-        return IntStream.rangeClosed(2, (int) Math.sqrt(n))
-                .noneMatch(i -> n % i == 0);
-    }
-
-    private static void printPrimeNumbers(int limit) {
-        IntStream.rangeClosed(2, limit) // Generate a stream of numbers from 2 to limit
-                .filter(AllProgramStore::isPrimeNumber) // Filter out non-prime numbers
-                .forEach(System.out::println); // Print each prime number
-    }
-
-    private static void checkLongestRepeatingSequence() {
-        String str = "abracadabra";
-        String longestRS = IntStream.range(0, str.length())
-                .boxed() // Convert IntStream to Stream<Integer>
-                .flatMap(i -> IntStream.range(i + 1, str.length())
-                        .mapToObj(j -> lcp(str.substring(i), str.substring(j))))
-                .max((s1, s2) -> Integer.compare(s1.length(), s2.length()))
-                .orElse("");
-        System.out.println("Longest repeating sequence: " + longestRS);
-    }
-
-    private static String lcp(String s, String t) {
-        int n = Math.min(s.length(), t.length());
-        for (int i = 0; i < n; i++) {
-            if (s.charAt(i) != t.charAt(i)) {
-                return s.substring(0, i);
-            }
-        }
-        return s.substring(0, n);
-    }
-
-    private static void getUniqueWordFromString() {
-        // get unique string from the inputs - string and using only from the group of words provided
-        List<String> MY_LIST = Arrays.asList(new String[]{"Microsoft Windows", "Mac OS", "GNU Linux", "Free BSD", "GNU Linux", "Mac OS"});
-        List<String> result = new ArrayList<>(new HashSet<>(MY_LIST));
-        System.out.println(result); // [GNU Linux, Microsoft Windows, Mac OS, Free BSD]
-
-        List<String> result1 = MY_LIST.stream().distinct().collect(Collectors.toList());
-        System.out.println(result1); // [Microsoft Windows, Mac OS, GNU Linux, Free BSD]
-
-        String str = "Welcome to geeks for geeks";
-        String[] words = str.split(" ");
-        List<String> al = new ArrayList<>(Arrays.asList(words));
-        for (String x : al) {
-            if (Collections.frequency(al, x) == 1) {
-                System.out.println(x); // Welcome, to, for
-            }
-        }
-    }
-
-    private static void pairNumbersHavingSum() {
-        int arr[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
-        int sum = 13;
-        Set<Integer> pair = new HashSet<>();
-
-        for (int i = 0; i < arr.length; i++) {
-            int temp = sum - arr[i];
-            if (pair.contains(temp)) {
-                System.out.println("Pair : " + temp + ", " + arr[i]);
-            }
-            pair.add(arr[i]);
-        }
+        course1Entries.forEach(e -> System.out.println(e.getKey() + " : " + e.getValue()));
     }
 }
