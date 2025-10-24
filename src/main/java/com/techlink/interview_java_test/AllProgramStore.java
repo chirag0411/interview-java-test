@@ -12,13 +12,13 @@ public class AllProgramStore {
     private AllProgramStore() {
     }
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
         System.out.println("Hello Test Program....!!");
         LOG.log(System.Logger.Level.INFO, "Starting AllProgramStore with args: {0}", Arrays.toString(args));
 
         countOccurrences();                             // Count occurrences in strings / numbers
         System.out.println("31 is prime? " + isPrimeNumber(31));
-        printPrimeNumbers(101);                         // Print primes up to limit
+        printPrimeNumbers();                         // Print primes up to limit
         checkLongestRepeatingSequence();                // Longest repeating substring
         getUniqueWordFromString();                      // Unique/distinct words
         pairNumbersHavingSum();                         // Pairs summing to target
@@ -74,9 +74,9 @@ public class AllProgramStore {
         return true;
     }
 
-    private static void printPrimeNumbers(int limit) {
-        System.out.println("Primes up to " + limit + ":");
-        IntStream.rangeClosed(2, limit)
+    private static void printPrimeNumbers() {
+        System.out.println("Primes up to " + 101 + ":");
+        IntStream.rangeClosed(2, 101)
                 .filter(AllProgramStore::isPrimeNumber)
                 .forEach(System.out::println);
     }

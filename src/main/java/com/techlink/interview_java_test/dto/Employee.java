@@ -12,12 +12,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Employee {
@@ -30,10 +28,8 @@ public class Employee {
 
     @NotNull(message = "salary is required")
     @DecimalMin(value = "0.00", inclusive = false, message = "salary must be greater than 0")
-    private BigDecimal salary;
+    private Double salary;
 
-    @Positive(message = "departmentId must be greater than 0")
-    private int departmentId;
-
-    private User user;
+    @NotNull(message = "department is required")
+    private String department;
 }
